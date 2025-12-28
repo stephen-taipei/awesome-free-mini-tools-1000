@@ -1,0 +1,1 @@
+import{jsx as t}from"react/jsx-runtime";import o from"react";import r from"react-dom/client";import e from"./App";import"./styles/index.css";import"./i18n";r.createRoot(document.getElementById("root")).render(t(o.StrictMode,{children:t(e,{})}));

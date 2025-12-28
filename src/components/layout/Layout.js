@@ -1,0 +1,1 @@
+import{jsx as e,jsxs as i}from"react/jsx-runtime";import a from"./Header";import r from"./Footer";function t({children:o}){return i("div",{className:"min-h-screen flex flex-col bg-slate-50",children:[e(a,{}),e("main",{className:"flex-1 container mx-auto px-4 py-8",children:o}),e(r,{})]})}export{t as default};

@@ -1,0 +1,1 @@
+var u=(e,n,d,o="...")=>{if(n<=0)return"";if(d==="chars")return e.length<=n?e:e.slice(0,n)+o;{let t=new TextEncoder;if(t.encode(e).length<=n)return e;let r=0,s=e.length,l="";for(;r<=s;){let c=Math.floor((r+s)/2),h=e.slice(0,c);t.encode(h).length<=n?(l=h,r=c+1):s=c-1}return l+o}};export{u as truncateText};

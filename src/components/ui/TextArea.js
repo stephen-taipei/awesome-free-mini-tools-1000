@@ -1,0 +1,1 @@
+import{jsx as t,jsxs as s}from"react/jsx-runtime";function l({label:e,className:a="",...r}){return s("div",{className:"w-full",children:[e&&t("label",{className:"block text-sm font-medium text-slate-700 mb-2",children:e}),t("textarea",{className:`input-textarea ${a}`,...r})]})}export{l as default};

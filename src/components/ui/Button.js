@@ -1,0 +1,1 @@
+import{jsx as i}from"react/jsx-runtime";function a({variant:t="primary",children:n,className:o="",...r}){const e={primary:"btn-primary",secondary:"btn-secondary",icon:"btn-icon"}[t];return i("button",{className:`${e} ${o}`,...r,children:n})}export{a as default};

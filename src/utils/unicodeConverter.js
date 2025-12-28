@@ -1,0 +1,1 @@
+var n=r=>r?r.split("").map(t=>`\\u${t.charCodeAt(0).toString(16).padStart(4,"0")}`).join(""):"",e=r=>{if(!r)return"";try{return r.replace(/\\u[\dA-F]{4}/gi,t=>String.fromCharCode(parseInt(t.replace(/\\u/g,""),16)))}catch{return r}};export{n as textToUnicode,e as unicodeToText};
