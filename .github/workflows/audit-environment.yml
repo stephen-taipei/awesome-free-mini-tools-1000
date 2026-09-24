@@ -1,0 +1,40 @@
+name: Audit environment
+
+on:
+  push:
+    branches: [audit/codebase-reliability-20260924]
+    paths: [.github/workflows/audit-environment.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  environment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Resolve compatible dependency updates
+        run: |
+          mkdir -p audit-artifacts
+          npm view vite@7 version engines --json > audit-artifacts/vite-metadata.json
+          npm view vite-plugin-pwa@1 version peerDependencies --json > audit-artifacts/pwa-metadata.json
+          npm install --save-exact --save-dev vite@7 @vitejs/plugin-react@5 vite-plugin-pwa@1 @playwright/test@1 @types/node@22 @types/qrcode@1 @types/jsbarcode@3 jsqr@1
+          npm install --save-exact dompurify@3 marked@16 qrcode@1 jsbarcode@3
+          npm update
+          npm audit --json > audit-artifacts/npm-audit.json || true
+          cp package.json package-lock.json audit-artifacts/
+          tar -czf audit-artifacts/node_modules.tar.gz node_modules
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-environment
+          path: audit-artifacts/
+          retention-days: 3
+          if-no-files-found: error
