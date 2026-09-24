@@ -1,0 +1,57 @@
+name: Audit baseline
+
+on:
+  push:
+    branches: [audit/codebase-reliability-20260924]
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Capture source snapshot and inventory
+        run: |
+          mkdir -p audit-artifacts
+          git archive --format=tar HEAD | gzip > audit-artifacts/source.tar.gz
+          python3 - <<'PY'
+          import pathlib, json, re
+          root = pathlib.Path('src')
+          files = sorted(p for p in root.rglob('*') if p.is_file())
+          shadows = [str(p) for p in files if p.suffix == '.js' and (p.with_suffix('.ts').exists() or p.with_suffix('.tsx').exists())]
+          patterns = {'eval': r'\beval\s*\(|new Function\s*\(', 'html': r'dangerouslySetInnerHTML|\.innerHTML\s*=', 'random': r'Math\.random', 'storage': r'localStorage|sessionStorage', 'objectUrl': r'createObjectURL|revokeObjectURL', 'placeholder': r'TODO|FIXME|placeholder|coming soon|not implemented'}
+          report = {'files': len(files), 'extensions': {}, 'shadows': shadows, 'matches': {}}
+          for p in files:
+              report['extensions'][p.suffix] = report['extensions'].get(p.suffix, 0) + 1
+              if p.suffix not in ('.ts', '.tsx'): continue
+              text = p.read_text()
+              for label, pattern in patterns.items():
+                  hits = [i for i, line in enumerate(text.splitlines(), 1) if re.search(pattern, line, re.I if label == 'placeholder' else 0)]
+                  if hits: report['matches'].setdefault(label, []).append({'path': str(p), 'lines': hits})
+          pathlib.Path('audit-artifacts/inventory.json').write_text(json.dumps(report, indent=2))
+          print(json.dumps({'files': report['files'], 'extensions': report['extensions'], 'shadow_count': len(shadows), 'pattern_files': {k: len(v) for k, v in report['matches'].items()}}, indent=2))
+          PY
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Baseline build
+        run: npm run build
+      - name: Dependency audit
+        if: always()
+        run: npm audit --json > audit-artifacts/npm-audit.json || true
+      - name: Upload baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-baseline
+          path: audit-artifacts/
+          retention-days: 7
+          if-no-files-found: error
