@@ -1,0 +1,38 @@
+name: Audit crypto environment
+on:
+  push:
+    branches: [audit/codebase-reliability-20260924]
+    paths: [.github/workflows/audit-crypto.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  environment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: audit-environment
+          run-id: 35956873413
+          github-token: ${{ github.token }}
+          path: resolved
+      - run: |
+          cp resolved/package.json resolved/package-lock.json .
+          tar -xzf resolved/node_modules.tar.gz
+          npm install --save-exact shamir-secret-sharing
+          npm audit --json > resolved/npm-audit.json
+          cp package.json package-lock.json resolved/
+          tar -czf resolved/crypto-module.tar.gz node_modules/shamir-secret-sharing
+          rm resolved/node_modules.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audit-crypto-environment
+          path: resolved/
+          retention-days: 3
